@@ -214,10 +214,12 @@ const SearchBar: React.FC<SearchBarProps> = ({
   // Handle errors
   useEffect(() => {
     const errorSubscription = ExpoSpeechRecognitionModule.addListener('error', (event: ExpoSpeechRecognitionErrorEvent) => {
-      console.error('Speech error:', event.error, event.message);
       setIsListening(false);
       if (event.error !== 'no-speech' && event.error !== 'aborted') {
+        console.error('Speech error:', event.error, event.message);
         Alert.alert('Speech Error', event.message || `Error: ${event.error}`);
+      } else {
+        console.log('Speech recognition stopped:', event.error);
       }
     });
 

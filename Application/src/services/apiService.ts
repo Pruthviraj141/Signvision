@@ -2,7 +2,7 @@
 // Using ADB reverse proxy: run `adb reverse tcp:8000 tcp:8000`
 const API_CONFIG = {
   baseUrl: __DEV__ 
-    ? 'http://localhost:8000'
+    ? 'http://10.36.49.140:8000'
     : 'https://your-production-api.com',
   timeout: 60000,
   retries: 3,
