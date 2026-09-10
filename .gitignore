@@ -9,7 +9,6 @@ Thumbs.db
 *.swp
 *.swo
 .env
-.env.*
 *.env
 node_modules/
 npm-debug.log*
