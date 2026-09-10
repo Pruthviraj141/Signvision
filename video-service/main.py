@@ -126,5 +126,5 @@ async def translate_video(video: UploadFile = File(...)):
     finally:
         # CLEANUP: aggressively delete tmp file!
         if os.path.exists(temp_file_path):
-            os.remove(temp_file_path)
+           # os.remove(temp_file_path)
             logger.info(f"Deleted temp file: {temp_file_path}")

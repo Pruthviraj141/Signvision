@@ -21,13 +21,13 @@ export default function CameraTranslateScreen({ onBack }: CameraTranslateScreenP
 
   // Native refs
   const cameraRef = useRef<CameraView>(null);
-  
+
   // Web refs
   const videoRef = useRef<any>(null);
   const mediaRecorderRef = useRef<any>(null);
   const webChunksRef = useRef<Blob[]>([]);
   const [webStream, setWebStream] = useState<any>(null);
-  
+
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Automatically request Web camera permission
@@ -43,7 +43,7 @@ export default function CameraTranslateScreen({ onBack }: CameraTranslateScreenP
             console.error('Camera access denied on web:', err);
             setErrorMsg('Camera access is required.');
           });
-          
+
         return () => {
           setWebStream((prevStream: any) => {
             if (prevStream) prevStream.getTracks().forEach((track: any) => track.stop());
@@ -116,25 +116,25 @@ export default function CameraTranslateScreen({ onBack }: CameraTranslateScreenP
         setErrorMsg('No camera stream found.');
         return;
       }
-      
+
       let mimeType = 'video/webm';
       try {
         const MediaRecorder = (window as any).MediaRecorder;
-        if (MediaRecorder.isTypeSupported && !MediaRecorder.isTypeSupported(mimeType)) mimeType = 'video/mp4'; 
-        
+        if (MediaRecorder.isTypeSupported && !MediaRecorder.isTypeSupported(mimeType)) mimeType = 'video/mp4';
+
         const mediaRecorder = new MediaRecorder(webStream, { mimeType });
         mediaRecorderRef.current = mediaRecorder;
         webChunksRef.current = [];
-        
+
         mediaRecorder.ondataavailable = (e: any) => {
           if (e.data && e.data.size > 0) webChunksRef.current.push(e.data);
         };
-        
+
         mediaRecorder.onstop = () => {
           const blob = new Blob(webChunksRef.current, { type: mimeType });
           processVideo(blob);
         };
-        
+
         mediaRecorder.start();
       } catch (err: any) {
         setIsRecording(false);
@@ -156,7 +156,7 @@ export default function CameraTranslateScreen({ onBack }: CameraTranslateScreenP
   const stopRecording = () => {
     if (timerRef.current) clearTimeout(timerRef.current);
     if (!isRecording) return;
-    
+
     if (Platform.OS === 'web') {
       if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
         mediaRecorderRef.current.stop();
@@ -192,8 +192,8 @@ export default function CameraTranslateScreen({ onBack }: CameraTranslateScreenP
       {/* 1. Camera Canvas (Bottom Layer) */}
       <View style={styles.cameraWrapper}>
         {Platform.OS === 'web' ? (
-          <video 
-            ref={videoRef} autoPlay playsInline muted 
+          <video
+            ref={videoRef} autoPlay playsInline muted
             style={StyleSheet.flatten([styles.camera, { objectFit: 'cover' }] as any)}
           />
         ) : (
@@ -203,7 +203,7 @@ export default function CameraTranslateScreen({ onBack }: CameraTranslateScreenP
 
       {/* 2. Visual Overlays (Middle Layer) */}
       <View style={styles.overlay}>
-        
+
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity style={styles.closeBtn} onPress={onBack}>
@@ -226,7 +226,7 @@ export default function CameraTranslateScreen({ onBack }: CameraTranslateScreenP
             {isComplete ? (
               <View style={styles.resultCard}>
                 <Text style={styles.resultCardLabel}>SIGN {translation && !translation.includes('UNCLEAR') ? 'DETECTED' : 'UNRECOGNIZED'}</Text>
-                
+
                 {translation && !translation.includes('UNCLEAR') ? (
                   <>
                     <Text style={styles.resultCardTranslation}>“{translation}”</Text>
@@ -242,7 +242,7 @@ export default function CameraTranslateScreen({ onBack }: CameraTranslateScreenP
                     </Text>
                   </>
                 )}
-                
+
                 <TouchableOpacity style={styles.signAgainBtn} onPress={resetState}>
                   <Text style={styles.signAgainText}>Sign Again</Text>
                 </TouchableOpacity>
@@ -261,9 +261,9 @@ export default function CameraTranslateScreen({ onBack }: CameraTranslateScreenP
                   {isRecording ? "Listening sequence..." : "Sign naturally"}
                 </Text>
 
-                <TouchableOpacity 
-                   onPress={handlePress}
-                   activeOpacity={0.8}
+                <TouchableOpacity
+                  onPress={handlePress}
+                  activeOpacity={0.8}
                 >
                   <Animated.View style={[styles.recordOuterRing, isRecording && styles.recordOuterRingActive, { transform: [{ scale: recordScale }] }]}>
                     <View style={[styles.recordInnerCircle, isRecording && { borderRadius: 8, width: 30, height: 30 }]} />
@@ -284,23 +284,23 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
   cameraWrapper: { flex: 1, overflow: 'hidden' }, // Ensures rounded corners or bounds stay clean
   camera: { flex: 1, width: '100%', height: '100%' },
-  
+
   overlay: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 10,
   },
-  
+
   contentWrapper: {
     flex: 1,
     justifyContent: 'space-between',
   },
   spacer: { flex: 1 }, // Pushes controls to bottom
-  
-  header: { 
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
+
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20, 
+    padding: 20,
     paddingTop: Platform.OS === 'android' ? 45 : 25,
     zIndex: 20,
   },

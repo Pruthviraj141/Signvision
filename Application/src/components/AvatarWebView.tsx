@@ -304,8 +304,8 @@ const AvatarWebView = forwardRef<AvatarWebViewRef, AvatarWebViewProps>(
       if (Platform.OS === 'web') {
         const listener = (event: MessageEvent) => {
           try {
-            const data: AvatarMessage = typeof event.data === 'string' 
-              ? JSON.parse(event.data) 
+            const data: AvatarMessage = typeof event.data === 'string'
+              ? JSON.parse(event.data)
               : event.data;
             handleMessage(data);
           } catch {

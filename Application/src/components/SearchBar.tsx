@@ -263,7 +263,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
 
   return (
     <View style={styles.container}>
-      <Animated.View 
+      <Animated.View
         style={[
           styles.inputContainer,
           disabled && styles.inputContainerDisabled,
@@ -274,7 +274,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
         <View style={styles.iconContainer}>
           <Text style={styles.searchIcon}>🔍</Text>
         </View>
-        
+
         {/* Text Input */}
         <TextInput
           ref={inputRef}
@@ -299,11 +299,11 @@ const SearchBar: React.FC<SearchBarProps> = ({
             <Text style={styles.listeningText}>🎤</Text>
           </Animated.View>
         )}
-        
+
         {/* Clear Button */}
         {value.length > 0 && !isListening && (
-          <TouchableOpacity 
-            style={styles.clearButton} 
+          <TouchableOpacity
+            style={styles.clearButton}
             onPress={handleClear}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
@@ -326,7 +326,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
             {isListening ? '⏹️' : '🎤'}
           </Text>
         </TouchableOpacity>
-        
+
         {/* Search Button - hide when listening */}
         {!isListening && (
           <TouchableOpacity

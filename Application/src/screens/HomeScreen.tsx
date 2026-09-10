@@ -32,21 +32,21 @@ const HomeScreen: React.FC = () => {
   const [isAvatarReady, setIsAvatarReady] = useState(false);
   const [searchHistory, setSearchHistory] = useState<HistoryItem[]>([]);
   const [suggestions, setSuggestions] = useState<string[]>([]);
-  
+
   // Sentence processing state
   const [processingMode, setProcessingMode] = useState<ProcessingMode>('word');
   const [signQueue, setSignQueue] = useState<SignQueueItem[]>([]);
   const [currentQueueIndex, setCurrentQueueIndex] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
   const [glossTokens, setGlossTokens] = useState<string[]>([]);
-  
+
   const avatarRef = useRef<AvatarWebViewRef>(null);
-  
+
   // Refs to access current values in callbacks without stale closures
   const signQueueRef = useRef<SignQueueItem[]>([]);
   const currentQueueIndexRef = useRef(0);
   const processingModeRef = useRef<ProcessingMode>('word');
-  
+
   // Keep refs in sync with state
   useEffect(() => { signQueueRef.current = signQueue; }, [signQueue]);
   useEffect(() => { currentQueueIndexRef.current = currentQueueIndex; }, [currentQueueIndex]);
@@ -99,17 +99,17 @@ const HomeScreen: React.FC = () => {
 
   const handleSearch = useCallback(async (input: string) => {
     if (!input.trim()) return;
-    
+
     resetPlaybackState();
-    
+
     if (processingMode === 'sentence') {
       // Sentence mode: Use backend API
       setIsProcessing(true);
       setPlaybackStatus('loading');
-      
+
       try {
         const response = await processSentence(input);
-        
+
         if (!response.success || response.results.length === 0) {
           setPlaybackStatus('error');
           setErrorMessage(response.error || 'Failed to process sentence');
@@ -117,11 +117,11 @@ const HomeScreen: React.FC = () => {
           setIsProcessing(false);
           return;
         }
-        
+
         // Extract gloss tokens and build sign queue
         const result = response.results[0];
         setGlossTokens(result.gloss.gloss);
-        
+
         // Build queue from signs that were found
         const queue: SignQueueItem[] = result.signs
           .filter(sign => sign.found && sign.s3_url)
@@ -130,7 +130,7 @@ const HomeScreen: React.FC = () => {
             url: sign.s3_url!,
             matchType: sign.match_type,
           }));
-        
+
         if (queue.length === 0) {
           setPlaybackStatus('error');
           setErrorMessage('No signs found for this sentence');
@@ -160,9 +160,9 @@ const HomeScreen: React.FC = () => {
     } else {
       // Word mode: Use local lookup (existing behavior)
       setPlaybackStatus('loading');
-      
+
       const result = lookupWord(input);
-      
+
       if (result.found && result.url) {
         setCurrentWord(result.word);
         saveToHistory(result.word, true);
@@ -191,9 +191,9 @@ const HomeScreen: React.FC = () => {
     const queue = signQueueRef.current;
     const currentIndex = currentQueueIndexRef.current;
     const mode = processingModeRef.current;
-    
+
     console.log('[HomeScreen] handleFinished:', word, 'queue:', queue.length, 'index:', currentIndex, 'mode:', mode);
-    
+
     if (mode === 'sentence' && queue.length > 0) {
       const nextIndex = currentIndex + 1;
       console.log('[HomeScreen] Next index:', nextIndex, 'Queue length:', queue.length);
@@ -260,11 +260,11 @@ const HomeScreen: React.FC = () => {
     if (isProcessing) {
       return 'Processing sentence...';
     }
-    
+
     if (processingMode === 'sentence' && signQueue.length > 0) {
       return `Playing ${currentQueueIndex + 1}/${signQueue.length}: ${currentWord}`;
     }
-    
+
     switch (playbackStatus) {
       case 'loading':
         return 'Loading...';
@@ -303,7 +303,7 @@ const HomeScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#0f0f1e" />
-      
+
       <View style={styles.header}>
         <View style={styles.headerTitleRow}>
           <View>
@@ -349,8 +349,8 @@ const HomeScreen: React.FC = () => {
           <Text style={styles.glossLabel}>GLOSS:</Text>
           <View style={styles.glossTokens}>
             {glossTokens.map((token, index) => (
-              <View 
-                key={`${token}-${index}`} 
+              <View
+                key={`${token}-${index}`}
                 style={[
                   styles.glossToken,
                   index === currentQueueIndex && playbackStatus === 'playing' && styles.glossTokenActive
@@ -372,7 +372,7 @@ const HomeScreen: React.FC = () => {
           onError={handleError}
           onStatusChange={handleStatusChange}
         />
-        
+
         <View style={styles.statusBar}>
           {isProcessing ? (
             <ActivityIndicator size="small" color="#2196F3" style={styles.statusSpinner} />
@@ -414,7 +414,7 @@ const HomeScreen: React.FC = () => {
             </TouchableOpacity>
           )}
         </View>
-        
+
         <FlatList
           data={searchHistory}
           keyExtractor={(item) => `${item.word}-${item.timestamp}`}
