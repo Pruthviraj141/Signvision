@@ -2,7 +2,7 @@
 // Using ADB reverse proxy: run `adb reverse tcp:8000 tcp:8000`
 const API_CONFIG = {
   baseUrl: __DEV__ 
-    ? 'http://10.36.49.140:8000'
+    ? 'http://10.99.60.213:8000'
     : 'https://your-production-api.com',
   timeout: 60000,
   retries: 3,
@@ -251,4 +251,64 @@ export function setApiBaseUrl(url: string): void {
 
 export function getApiBaseUrl(): string {
   return API_CONFIG.baseUrl;
+}
+
+export const VIDEO_API_CONFIG = {
+  baseUrl: __DEV__ 
+    ? 'http://10.99.60.213:8001'
+    : 'https://your-video-api.com',
+  timeout: 60000,
+  retries: 3,
+  retryDelay: 1000,
+};
+
+export interface TranslateVideoResponse {
+  translation: string;
+}
+
+export async function translateVideoClip(videoData: string | Blob): Promise<TranslateVideoResponse> {
+  const formData = new FormData();
+  
+  if (typeof videoData === 'string') {
+    const filename = videoData.split('/').pop() || 'video.mp4';
+    formData.append('video', {
+      uri: videoData,
+      type: 'video/mp4',
+      name: filename,
+    } as unknown as Blob);
+  } else {
+    formData.append('video', videoData, 'video.webm');
+  }
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), VIDEO_API_CONFIG.timeout);
+
+  try {
+    const response = await fetch(`${VIDEO_API_CONFIG.baseUrl}/api/translate-video`, {
+      method: 'POST',
+      body: formData,
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      throw new ApiError(
+        `Video translation failed: ${response.statusText}`,
+        response.status,
+        errorBody,
+        response.status >= 500
+      );
+    }
+
+    return await response.json();
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error instanceof ApiError) throw error;
+    if (error instanceof Error) {
+      throw new ApiError(`Video upload error: ${error.message}`, undefined, undefined, false);
+    }
+    throw new ApiError('Unknown video processing error');
+  }
 }

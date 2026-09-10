@@ -16,6 +16,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import AvatarWebView, { AvatarWebViewRef } from '../components/AvatarWebView';
 import SearchBar from '../components/SearchBar';
 import { lookupWord, getWordCount } from '../services/s3Service';
+import CameraTranslateScreen from './CameraTranslateScreen';
 import { processSentence, ApiError } from '../services/apiService';
 import type { PlaybackStatus, HistoryItem, SignQueueItem, ProcessingMode } from '../types';
 
@@ -23,6 +24,7 @@ const HISTORY_STORAGE_KEY = '@signvision_history';
 const MAX_HISTORY_ITEMS = 20;
 
 const HomeScreen: React.FC = () => {
+  const [isCameraActive, setIsCameraActive] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentWord, setCurrentWord] = useState<string | null>(null);
   const [playbackStatus, setPlaybackStatus] = useState<PlaybackStatus>('idle');
@@ -294,13 +296,24 @@ const HomeScreen: React.FC = () => {
     }
   };
 
+  if (isCameraActive) {
+    return <CameraTranslateScreen onBack={() => setIsCameraActive(false)} />;
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#0f0f1e" />
       
       <View style={styles.header}>
-        <Text style={styles.title}>SignVision</Text>
-        <Text style={styles.subtitle}>{getWordCount().toLocaleString()} signs available</Text>
+        <View style={styles.headerTitleRow}>
+          <View>
+            <Text style={styles.title}>SignVision</Text>
+            <Text style={styles.subtitle}>{getWordCount().toLocaleString()} signs available</Text>
+          </View>
+          <TouchableOpacity style={styles.cameraToggleBtn} onPress={() => setIsCameraActive(true)}>
+            <Text style={styles.cameraToggleText}>📷 Sign ➔ English</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Mode Toggle */}
@@ -450,6 +463,22 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#888',
     marginTop: 4,
+  },
+  headerTitleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  cameraToggleBtn: {
+    backgroundColor: '#4CAF50',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  cameraToggleText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 12,
   },
   modeToggle: {
     flexDirection: 'row',

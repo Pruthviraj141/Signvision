@@ -4,7 +4,7 @@ import logging
 from typing import List, Dict, Any, Optional
 
 import spacy
-from openai import OpenAI
+from groq import Groq
 
 from .config import settings
 
@@ -13,9 +13,8 @@ logger = logging.getLogger("nlp_engine")
 
 nlp = spacy.load("en_core_web_trf")
 
-llm_client = OpenAI(
-    base_url=settings.GPT_BASE_URL,
-    api_key=settings.GPT_API_KEY,
+llm_client = Groq(
+    api_key=settings.GROQ_API_KEY,
 )
 
 AUXILIARY_VERBS = {
@@ -436,7 +435,7 @@ def call_llm(prompt: str) -> Dict[str, Any]:
 
         try:
             completion = llm_client.chat.completions.create(
-                model=settings.GPT_MODEL,
+                model=settings.GROQ_MODEL,
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.1,
                 top_p=0.95,

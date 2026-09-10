@@ -5,9 +5,8 @@ from functools import lru_cache
 
 
 class Settings(BaseSettings):
-    GPT_API_KEY: str = ""
-    GPT_BASE_URL: str = "https://integrate.api.nvidia.com/v1"
-    GPT_MODEL: str = "openai/gpt-oss-120b"
+    GROQ_API_KEY: str = ""
+    GROQ_MODEL: str = "openai/gpt-oss-20b"
 
     CHROMA_DB_PATH: str = "./data/chroma_db"
     CHROMA_COLLECTION: str = "words"
