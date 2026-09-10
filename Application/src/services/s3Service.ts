@@ -32,7 +32,7 @@ const signData = signLanguageData as SignLanguageDataMap;
 
 // S3 bucket configuration (fallback if not in JSON)
 const S3_CONFIG = {
-  bucket: "signvision-085587597556",
+  bucket: "signvision-data-1234",
   region: "ap-south-1",
   basePath: "sigml-files",
 };

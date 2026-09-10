@@ -649,7 +649,7 @@ The `@lru_cache()` on `get_settings()` ensures the settings object is created on
 "ACCEPT": {
   "anchors": ["AGREE", "RECEIVE", "APPROVE"],
   "category": "verb",
-  "s3_url": "https://signvision-085587597556.s3.ap-south-1.amazonaws.com/sigml-files/accept.sigml",
+  "s3_url": "https://signvision-data-1234.s3.ap-south-1.amazonaws.com/sigml-files/accept.sigml",
   "hamnosys": "..."  // optional: phonological notation
 }
 ```
@@ -681,7 +681,7 @@ SiGML (Signing Gesture Markup Language) is an XML-based format that encodes 3D h
 
 Example URL structure:
 ```
-https://signvision-085587597556.s3.ap-south-1.amazonaws.com/sigml-files/accept.sigml
+https://signvision-data-1234.s3.ap-south-1.amazonaws.com/sigml-files/accept.sigml
 ```
 
 ### 7.4 ChromaDB Vector Store

@@ -90,7 +90,9 @@ async def translate_video(video: UploadFile = File(...)):
                 logger.info("Video is processing, waiting...")
                 time.sleep(2)
             elif file_info.state.name == "FAILED":
-                raise HTTPException(status_code=500, detail="Video processing failed in Gemini.")
+                err_msg = getattr(file_info, 'error', 'No internal model error details available')
+                logger.error(f"Gemini internal video processing error: {err_msg}")
+                raise HTTPException(status_code=400, detail="Gemini failed to process this video clip. It might be corrupted or too short. Please try recording again.")
             else:
                 break
 
