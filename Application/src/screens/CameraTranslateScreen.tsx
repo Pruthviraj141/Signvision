@@ -204,7 +204,7 @@ export default function CameraTranslateScreen({ onBack }: CameraTranslateScreenP
           {Platform.OS === 'web' ? (
             <video
               ref={videoRef} autoPlay playsInline muted
-              style={StyleSheet.flatten([styles.camera, { objectFit: 'cover' }] as any)}
+              style={StyleSheet.flatten([styles.camera, { objectFit: 'contain' }] as any)}
             />
           ) : (
             <CameraView style={styles.camera} ref={cameraRef} facing={facing} zoom={0} mode="video" />
@@ -309,7 +309,7 @@ export default function CameraTranslateScreen({ onBack }: CameraTranslateScreenP
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
   cameraContainerPlaceholder: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  cameraWrapper: { width: '100%', aspectRatio: 3/4, overflow: 'hidden', borderRadius: 24 }, // Locked aspect ratio prevents Native cropping
+  cameraWrapper: { width: '100%', aspectRatio: Platform.OS === 'web' ? 16/9 : 9/16, overflow: 'hidden', borderRadius: Platform.OS === 'web' ? 0 : 24, backgroundColor: '#000' },
   camera: { flex: 1, width: '100%', height: '100%' },
 
   overlay: {

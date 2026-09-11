@@ -99,12 +99,12 @@ async def translate_video(video: UploadFile = File(...)):
         # 4. Prompt the model
         logger.info("Generating content from video...")
         prompt = (
-            "You are an expert American and Indian Sign Language interpreter. "
-            "Here is a short video of a person performing a continuous sign sequence. "
-            "Look at the hand movements, body posture, and facial expressions carefully. "
-            "Interpret the complete sequence as one utterance. "
-            "If the gesture is totally unclear, respond precisely with 'UNCLEAR SIGN SEQUENCE'. "
-            "Otherwise, respond ONLY with a single natural English sentence capturing the meaning."
+            "SYSTEM DIRECTIVE: You are an advanced Indian Sign Language (ISL) recognition AI. "
+            "Your sole purpose is to observe ISL video sequences and translate them directly into accurate, natural English.\n\n"
+            "Carefully analyze the hand shapes, motion trajectories, and facial expressions in this ISL gesture. "
+            "Synthesize the distinct ISL signs into a singular and grammatically correct English utterance. "
+            "If the video is completely unreadable, heavily obscured, or lacks a signing human, return exactly: 'UNCLEAR SIGN SEQUENCE'. "
+            "Otherwise, output strictly the translated English sentence with NO conversational filler, internal thoughts, or introductions."
         )
 
         response = client.models.generate_content(
