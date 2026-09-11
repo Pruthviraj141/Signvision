@@ -2,6 +2,12 @@
 
 SignVision is an intelligent bidirectional translation system bridging the gap between spoken/written language and Indian Sign Language (ISL). 
 
+use this for creating  embeddings so it should not fail 
+
+python -c "from app.services.semantic_search import build_embeddings; build_embeddings()"
+
+
+
 It features two distinct operation modes:
 1. **Text-to-Sign:** Translate natural language into accurate ISL grammar and visual representations.
 2. **Sign-to-English (Video Microservice):** Captures real-life signs natively through your phone/browser camera and processes them smoothly into a natural English translation using Gemini generative AI.
