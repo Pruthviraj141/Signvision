@@ -120,6 +120,9 @@ async def translate_video(video: UploadFile = File(...)):
 
         return JSONResponse(content={"translation": english_sentence})
 
+    except HTTPException:
+        # Allow pre-planned exceptions (like the 400 rejection above) to pass unhindered!
+        raise
     except Exception as e:
         logger.error(f"Error processing video: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))

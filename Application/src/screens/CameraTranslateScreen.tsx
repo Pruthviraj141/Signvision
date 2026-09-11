@@ -15,6 +15,7 @@ export default function CameraTranslateScreen({ onBack }: CameraTranslateScreenP
   const [isProcessing, setIsProcessing] = useState(false);
   const [translation, setTranslation] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [facing, setFacing] = useState<"front" | "back">("front");
 
   // Animations
   const recordScale = useRef(new Animated.Value(1)).current;
@@ -34,7 +35,10 @@ export default function CameraTranslateScreen({ onBack }: CameraTranslateScreenP
   useEffect(() => {
     if (Platform.OS === 'web') {
       if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+        navigator.mediaDevices.getUserMedia({ 
+          video: { facingMode: facing === "front" ? "user" : "environment" }, 
+          audio: false 
+        })
           .then((stream) => {
             setWebPermissionGranted(true);
             setWebStream(stream);
@@ -54,7 +58,7 @@ export default function CameraTranslateScreen({ onBack }: CameraTranslateScreenP
         setErrorMsg('Camera API not supported in this browser.');
       }
     }
-  }, []);
+  }, [facing]);
 
   useEffect(() => {
     if (Platform.OS === 'web' && videoRef.current && webStream) {
@@ -84,6 +88,11 @@ export default function CameraTranslateScreen({ onBack }: CameraTranslateScreenP
       </View>
     );
   }
+
+  const toggleCamera = () => {
+    if (isRecording || isProcessing) return;
+    setFacing(current => current === "front" ? "back" : "front");
+  };
 
   const handlePress = () => {
     if (isProcessing) return;
@@ -190,15 +199,17 @@ export default function CameraTranslateScreen({ onBack }: CameraTranslateScreenP
   return (
     <View style={styles.container}>
       {/* 1. Camera Canvas (Bottom Layer) */}
-      <View style={styles.cameraWrapper}>
-        {Platform.OS === 'web' ? (
-          <video
-            ref={videoRef} autoPlay playsInline muted
-            style={StyleSheet.flatten([styles.camera, { objectFit: 'cover' }] as any)}
-          />
-        ) : (
-          <CameraView style={styles.camera} ref={cameraRef} facing="front" mode="video" />
-        )}
+      <View style={styles.cameraContainerPlaceholder}>
+        <View style={styles.cameraWrapper}>
+          {Platform.OS === 'web' ? (
+            <video
+              ref={videoRef} autoPlay playsInline muted
+              style={StyleSheet.flatten([styles.camera, { objectFit: 'cover' }] as any)}
+            />
+          ) : (
+            <CameraView style={styles.camera} ref={cameraRef} facing={facing} zoom={0} mode="video" />
+          )}
+        </View>
       </View>
 
       {/* 2. Visual Overlays (Middle Layer) */}
@@ -261,14 +272,29 @@ export default function CameraTranslateScreen({ onBack }: CameraTranslateScreenP
                   {isRecording ? "Listening sequence..." : "Sign naturally"}
                 </Text>
 
-                <TouchableOpacity
-                  onPress={handlePress}
-                  activeOpacity={0.8}
-                >
-                  <Animated.View style={[styles.recordOuterRing, isRecording && styles.recordOuterRingActive, { transform: [{ scale: recordScale }] }]}>
-                    <View style={[styles.recordInnerCircle, isRecording && { borderRadius: 8, width: 30, height: 30 }]} />
-                  </Animated.View>
-                </TouchableOpacity>
+                <View style={styles.recordRow}>
+                  <View style={styles.sideButtonFallback} />
+
+                  <TouchableOpacity
+                    onPress={handlePress}
+                    activeOpacity={0.8}
+                    style={styles.recordButtonContainer}
+                  >
+                    <Animated.View style={[styles.recordOuterRing, isRecording && styles.recordOuterRingActive, { transform: [{ scale: recordScale }] }]}>
+                      <View style={[styles.recordInnerCircle, isRecording && { borderRadius: 8, width: 30, height: 30 }]} />
+                    </Animated.View>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity 
+                    style={[styles.flipBtn, isRecording && {opacity: 0.5}]} 
+                    onPress={toggleCamera} 
+                    disabled={isRecording}
+                  >
+                    <View style={styles.flipBtnCircle}>
+                      <Text style={styles.flipBtnText}>FLIP</Text>
+                    </View>
+                  </TouchableOpacity>
+                </View>
 
                 <Text style={styles.holdText}>{isRecording ? "TAP TO STOP" : "TAP TO SIGN"}</Text>
               </View>
@@ -282,7 +308,8 @@ export default function CameraTranslateScreen({ onBack }: CameraTranslateScreenP
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
-  cameraWrapper: { flex: 1, overflow: 'hidden' }, // Ensures rounded corners or bounds stay clean
+  cameraContainerPlaceholder: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  cameraWrapper: { width: '100%', aspectRatio: 3/4, overflow: 'hidden', borderRadius: 24 }, // Locked aspect ratio prevents Native cropping
   camera: { flex: 1, width: '100%', height: '100%' },
 
   overlay: {
@@ -344,6 +371,14 @@ const styles = StyleSheet.create({
     width: 60, height: 60, borderRadius: 30,
     backgroundColor: '#fff',
   },
+  
+  recordRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%', paddingHorizontal: 40, marginBottom: 16 },
+  recordButtonContainer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  sideButtonFallback: { width: 48, height: 48 },
+  flipBtn: { width: 48, height: 48, justifyContent: 'center', alignItems: 'center' },
+  flipBtnCircle: { width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.4)' },
+  flipBtnText: { color: '#fff', fontSize: 10, fontWeight: '700', letterSpacing: 1 },
+
   holdText: { color: 'rgba(255,255,255,0.7)', fontSize: 12, letterSpacing: 1.5, fontWeight: '600' },
 
   // State: Processing
