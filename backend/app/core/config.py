@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     EMBEDDING_MODEL: str = "all-MiniLM-L6-v2"
 
     SEMANTIC_SEARCH_TOP_K: int = 5
-    SEMANTIC_SEARCH_MIN_SIMILARITY: float = 0.5
+    SEMANTIC_SEARCH_MIN_SIMILARITY: float = 0.75
 
     DATA_DIR: Path = Path(__file__).parent.parent.parent / "data"
     SIGN_LANGUAGE_DATA_FILE: str = "sign_language_data.json"

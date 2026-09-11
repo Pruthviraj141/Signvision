@@ -92,7 +92,7 @@ class WordLookupService:
                     )
 
         for word, entry in self._sign_data.items():
-            if normalized in word or word in normalized:
+            if normalized in word or (word in normalized and len(word) >= 3):
                 if self._has_valid_url(entry):
                     return WordLookupResult(
                         word=word,
@@ -136,13 +136,51 @@ class WordLookupService:
             match_type="none",
         )
 
+    def _character_fallback(self, word: str, original_query: str) -> List[WordLookupResult]:
+        import re
+        fallback_results = []
+        normalized_word = self._normalize_word(word).replace("_", "")
+        # Keep only alphanumeric characters (since sign_language_data has A-Z and 0-9)
+        chars = re.sub(r'[^A-Z0-9]', '', normalized_word)
+        
+        if not chars:
+            return []
+            
+        for char in chars:
+            char_result = self.lookup(char, use_semantic_fallback=False)
+            if char_result.found:
+                # Override original_query so the frontend displays the letter correctly
+                char_result.original_query = char
+                char_result.match_type = "character_fallback"
+                fallback_results.append(char_result)
+            else:
+                # If a specific character is not found, preserve the sequence without breaking
+                fallback_results.append(
+                    WordLookupResult(
+                        word=char,
+                        original_query=char,
+                        found=False,
+                        s3_url=None,
+                        match_type="character_fallback"
+                    )
+                )
+        return fallback_results
+
     def lookup_gloss_sequence(
         self, gloss_tokens: List[str], use_semantic_fallback: bool = True
     ) -> List[WordLookupResult]:
         results = []
         for token in gloss_tokens:
             result = self.lookup(token, use_semantic_fallback=use_semantic_fallback)
-            results.append(result)
+            if not result.found and result.match_type == "none":
+                # Do character fallback specifically if the entire word couldn't be matched
+                fallback_letters = self._character_fallback(token, original_query=result.original_query)
+                if fallback_letters:
+                    results.extend(fallback_letters)
+                else:
+                    results.append(result)
+            else:
+                results.append(result)
         return results
 
     def get_all_words(self) -> List[str]:
