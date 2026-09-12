@@ -12,6 +12,7 @@ import {
   Alert,
 } from 'react-native';
 import { autocomplete } from '../services/s3Service';
+import { Ionicons } from '@expo/vector-icons';
 import {
   ExpoSpeechRecognitionModule,
   type ExpoSpeechRecognitionErrorEvent,
@@ -270,9 +271,9 @@ const SearchBar: React.FC<SearchBarProps> = ({
           { opacity: disabled ? 0.6 : pulseAnim }
         ]}
       >
-        {/* Search Icon */}
+        {/* Search Vector Icon */}
         <View style={styles.iconContainer}>
-          <Text style={styles.searchIcon}>🔍</Text>
+          <Ionicons name="search" size={20} color="#94a3b8" />
         </View>
 
         {/* Text Input */}
@@ -285,7 +286,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
           onFocus={handleFocus}
           onBlur={handleBlur}
           placeholder={placeholder}
-          placeholderTextColor="#666"
+          placeholderTextColor="#64748b"
           autoCapitalize="none"
           autoCorrect={false}
           returnKeyType="search"
@@ -293,65 +294,36 @@ const SearchBar: React.FC<SearchBarProps> = ({
           selectTextOnFocus
         />
 
-        {/* Listening indicator */}
-        {isListening && (
-          <Animated.View style={[styles.listeningIndicator, { opacity: listenPulseAnim }]}>
-            <Text style={styles.listeningText}>🎤</Text>
-          </Animated.View>
-        )}
-
         {/* Clear Button */}
         {value.length > 0 && !isListening && (
           <TouchableOpacity
             style={styles.clearButton}
             onPress={handleClear}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            accessibilityLabel="Clear input"
           >
-            <Text style={styles.clearIcon}>✕</Text>
+            <Ionicons name="close-circle" size={20} color="#64748b" />
           </TouchableOpacity>
         )}
 
-        {/* Microphone Button */}
+        {/* Send / Search Button */}
         <TouchableOpacity
           style={[
-            styles.micButton,
-            isListening && styles.micButtonActive,
-            disabled && styles.micButtonDisabled,
+            styles.sendButton,
+            (!value.trim() || disabled) && styles.sendButtonDisabled,
           ]}
-          onPress={handleSpeechRecognition}
-          disabled={disabled}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          onPress={handleSubmit}
+          disabled={!value.trim() || disabled}
+          accessibilityLabel="Send search"
+          accessibilityRole="button"
+          activeOpacity={0.8}
         >
-          <Text style={[styles.micIcon, isListening && styles.micIconActive]}>
-            {isListening ? '⏹️' : '🎤'}
-          </Text>
+          {isLoading ? (
+            <Ionicons name="ellipsis-horizontal" size={18} color="#ffffff" />
+          ) : (
+            <Ionicons name="send" size={16} color="#ffffff" style={{ marginLeft: 2 }} />
+          )}
         </TouchableOpacity>
-
-        {/* Search Button - hide when listening */}
-        {!isListening && (
-          <TouchableOpacity
-            style={[
-              styles.searchButton,
-              (!value.trim() || disabled) && styles.searchButtonDisabled,
-            ]}
-            onPress={handleSubmit}
-            disabled={!value.trim() || disabled}
-          >
-            <Text style={styles.searchButtonText}>
-              {isLoading ? '...' : 'Go'}
-            </Text>
-          </TouchableOpacity>
-        )}
-
-        {/* Listening - Stop button */}
-        {isListening && (
-          <TouchableOpacity
-            style={styles.stopListeningButton}
-            onPress={handleSpeechRecognition}
-          >
-            <Text style={styles.stopListeningText}>Stop</Text>
-          </TouchableOpacity>
-        )}
       </Animated.View>
 
       {/* Autocomplete Suggestions */}
@@ -365,6 +337,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
                 style={styles.suggestionItem}
                 onPress={() => handleSuggestionPress(item)}
               >
+                <Ionicons name="search-outline" size={15} color="#64748b" style={styles.suggestionIcon} />
                 <Text style={styles.suggestionText}>{item}</Text>
               </TouchableOpacity>
             )}
@@ -373,6 +346,48 @@ const SearchBar: React.FC<SearchBarProps> = ({
           />
         </View>
       )}
+
+      {/* Dedicated Voice / Microphone Action below search bar */}
+      <View style={styles.voiceSection}>
+        <Animated.View
+          style={[
+            styles.micPulseRing,
+            isListening && {
+              transform: [
+                {
+                  scale: listenPulseAnim.interpolate({
+                    inputRange: [0.5, 1],
+                    outputRange: [1.25, 1],
+                  }),
+                },
+              ],
+              opacity: listenPulseAnim,
+            },
+          ]}
+        >
+          <TouchableOpacity
+            style={[
+              styles.primaryMicButton,
+              isListening && styles.primaryMicButtonActive,
+              disabled && styles.primaryMicButtonDisabled,
+            ]}
+            onPress={handleSpeechRecognition}
+            disabled={disabled}
+            activeOpacity={0.85}
+            accessibilityLabel={isListening ? 'Stop listening' : 'Start speech recognition'}
+            accessibilityRole="button"
+          >
+            <Ionicons
+              name={isListening ? 'square' : 'mic'}
+              size={24}
+              color="#ffffff"
+            />
+          </TouchableOpacity>
+        </Animated.View>
+        <Text style={[styles.voicePromptText, isListening && styles.voicePromptTextActive]}>
+          {isListening ? 'Listening... Tap to stop' : 'Tap to speak'}
+        </Text>
+      </View>
     </View>
   );
 };
@@ -385,104 +400,130 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#2a2a4a',
-    borderRadius: 16,
-    paddingHorizontal: 12,
-    paddingVertical: Platform.OS === 'ios' ? 12 : 4,
-    borderWidth: 1,
-    borderColor: '#3a3a6a',
-  },
-  inputContainerDisabled: {
-    backgroundColor: '#1a1a3a',
-  },
-  iconContainer: {
-    marginRight: 8,
-  },
-  searchIcon: {
-    fontSize: 18,
-  },
-  input: {
-    flex: 1,
-    fontSize: 16,
-    color: '#fff',
-    paddingVertical: Platform.OS === 'ios' ? 0 : 8,
-  },
-  clearButton: {
-    padding: 4,
-    marginRight: 8,
-  },
-  clearIcon: {
-    color: '#888',
-    fontSize: 16,
-  },
-  listeningIndicator: {
-    marginRight: 8,
-  },
-  listeningText: {
-    fontSize: 18,
-  },
-  micButton: {
-    backgroundColor: '#3a3a6a',
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderRadius: 10,
-    marginRight: 8,
-  },
-  micButtonActive: {
-    backgroundColor: '#f44336',
-  },
-  micButtonDisabled: {
-    backgroundColor: '#2a2a4a',
-    opacity: 0.5,
-  },
-  micIcon: {
-    fontSize: 18,
-  },
-  micIconActive: {
-    fontSize: 18,
-  },
-  searchButton: {
-    backgroundColor: '#4CAF50',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 12,
-  },
-  searchButtonDisabled: {
-    backgroundColor: '#2a4a2a',
-  },
-  searchButtonText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  stopListeningButton: {
-    backgroundColor: '#f44336',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 12,
-  },
-  stopListeningText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  suggestionsContainer: {
-    position: 'absolute',
-    top: '100%',
-    left: 0,
-    right: 0,
-    backgroundColor: '#2a2a4a',
-    borderRadius: 12,
-    marginTop: 8,
-    maxHeight: 200,
-    borderWidth: 1,
-    borderColor: '#3a3a6a',
+    backgroundColor: '#162238',
+    borderRadius: 22,
+    paddingHorizontal: 14,
+    paddingVertical: Platform.OS === 'ios' ? 8 : 4,
+    borderWidth: 1.5,
+    borderColor: '#243452',
     ...Platform.select({
       ios: {
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
+        shadowOpacity: 0.25,
         shadowRadius: 8,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
+  },
+  inputContainerDisabled: {
+    backgroundColor: '#0f172a',
+    borderColor: '#1e293b',
+  },
+  iconContainer: {
+    marginRight: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  input: {
+    flex: 1,
+    fontSize: 15,
+    color: '#f8fafc',
+    paddingVertical: Platform.OS === 'ios' ? 6 : 6,
+  },
+  clearButton: {
+    padding: 6,
+    marginRight: 6,
+  },
+  sendButton: {
+    backgroundColor: '#22c55e',
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#22c55e',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.35,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  sendButtonDisabled: {
+    backgroundColor: '#1e293b',
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  voiceSection: {
+    alignItems: 'center',
+    marginTop: 14,
+    marginBottom: 4,
+  },
+  micPulseRing: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: 'rgba(34, 197, 94, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  primaryMicButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#22c55e',
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#22c55e',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.45,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 6,
+      },
+    }),
+  },
+  primaryMicButtonActive: {
+    backgroundColor: '#ef4444',
+    shadowColor: '#ef4444',
+  },
+  primaryMicButtonDisabled: {
+    backgroundColor: '#1e293b',
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  voicePromptText: {
+    color: '#94a3b8',
+    fontSize: 12,
+    fontWeight: '500',
+    marginTop: 6,
+    letterSpacing: 0.2,
+  },
+  voicePromptTextActive: {
+    color: '#f87171',
+    fontWeight: '600',
+  },
+  suggestionsContainer: {
+    position: 'absolute',
+    top: 56,
+    left: 0,
+    right: 0,
+    backgroundColor: '#162238',
+    borderRadius: 16,
+    maxHeight: 200,
+    borderWidth: 1.5,
+    borderColor: '#243452',
+    zIndex: 100,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.35,
+        shadowRadius: 10,
       },
       android: {
         elevation: 8,
@@ -490,14 +531,20 @@ const styles = StyleSheet.create({
     }),
   },
   suggestionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#3a3a6a',
+    borderBottomColor: '#1e293b',
+  },
+  suggestionIcon: {
+    marginRight: 10,
   },
   suggestionText: {
-    color: '#fff',
-    fontSize: 15,
+    color: '#f1f5f9',
+    fontSize: 14,
+    fontWeight: '500',
   },
 });
 

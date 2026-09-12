@@ -1,9 +1,28 @@
 // API Configuration
-// Using ADB reverse proxy: run `adb reverse tcp:8000 tcp:8000`
+// EXPO_PUBLIC_* values are embedded in the client bundle by Expo. They must not
+// contain secrets. See .env.example for emulator and physical-device examples.
+function getRequiredApiUrl(name: string, value: string | undefined): string {
+  if (!value) {
+    throw new Error(
+      `${name} is not configured. Copy .env.example to .env and set ${name}.`
+    );
+  }
+
+  return value.replace(/\/+$/, '');
+}
+
+const CORE_API_BASE_URL = getRequiredApiUrl(
+  'EXPO_PUBLIC_CORE_API_URL',
+  process.env.EXPO_PUBLIC_CORE_API_URL
+);
+
+const VIDEO_API_BASE_URL = getRequiredApiUrl(
+  'EXPO_PUBLIC_VIDEO_API_URL',
+  process.env.EXPO_PUBLIC_VIDEO_API_URL
+);
+
 const API_CONFIG = {
-  baseUrl: __DEV__ 
-    ? 'http://10.99.60.213:8000'
-    : 'https://your-production-api.com',
+  baseUrl: CORE_API_BASE_URL,
   timeout: 60000,
   retries: 3,
   retryDelay: 1000,
@@ -254,9 +273,7 @@ export function getApiBaseUrl(): string {
 }
 
 export const VIDEO_API_CONFIG = {
-  baseUrl: __DEV__ 
-    ? 'http://10.99.60.213:8001'
-    : 'https://your-video-api.com',
+  baseUrl: VIDEO_API_BASE_URL,
   timeout: 60000,
   retries: 3,
   retryDelay: 1000,
