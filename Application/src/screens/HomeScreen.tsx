@@ -302,7 +302,7 @@ const HomeScreen: React.FC = () => {
       <View style={styles.header}>
         <View style={styles.headerTitleRow}>
           <View>
-            <Text style={styles.title}>SignVision</Text>
+            <Text style={styles.title}>VaaniMudra</Text>
             {/* <View style={styles.signBadge}>
               <View style={styles.signBadgeDot} />
               <Text style={styles.subtitle}>{getWordCount().toLocaleString()} signs</Text>
@@ -322,7 +322,7 @@ const HomeScreen: React.FC = () => {
       </View>
 
       {/* GLOSS Preview */}
-      {glossTokens.length > 0 && (
+      {/* {glossTokens.length > 0 && (
         <View style={styles.glossContainer}>
           <Text style={styles.glossLabel}>GLOSS</Text>
           <View style={styles.glossTokens}>
@@ -339,7 +339,7 @@ const HomeScreen: React.FC = () => {
             ))}
           </View>
         </View>
-      )}
+      )} */}
 
       {/* 3D CWASA Avatar Card */}
       <View style={styles.avatarContainer}>
@@ -463,6 +463,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#f8fafc',
     letterSpacing: 0.5,
+    marginBottom: 8,
   },
   signBadge: {
     flexDirection: 'row',
@@ -482,7 +483,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   headerTitleRow: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
