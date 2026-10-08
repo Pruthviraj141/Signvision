@@ -32,7 +32,7 @@ const signData = signLanguageData as SignLanguageDataMap;
 
 // S3 bucket configuration (fallback if not in JSON)
 const S3_CONFIG = {
-  bucket: "signvision-data-1234",
+  bucket: "signvision-data-741452524968-bucket",
   region: "ap-south-1",
   basePath: "sigml-files",
 };
@@ -44,7 +44,7 @@ const S3_CONFIG = {
  * - Trim whitespace
  */
 export function normalizeWord(word: string): string {
-  return word.trim().toUpperCase().replace(/\s+/g, "_");
+  return word.trim().toUpperCase().replace(/\s+/g, " ");
 }
 
 /**

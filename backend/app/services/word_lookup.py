@@ -54,7 +54,7 @@ class WordLookupService:
         self._initialized = True
 
     def _normalize_word(self, word: str) -> str:
-        return word.strip().upper().replace(" ", "_")
+        return " ".join(word.strip().upper().split())
 
     def _has_valid_url(self, entry: Dict) -> bool:
         return bool(entry.get("s3_url"))

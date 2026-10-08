@@ -125,11 +125,11 @@ TIME_MARKER_MAP = {
 }
 
 FIXED_EXPRESSION_MAP = {
-    "thank you": "THANKYOU",
-    "thank you very much": "THANKYOU",
-    "thanks": "THANKYOU",
-    "how are you": "HOWAREYOU",
-    "how are you doing": "HOWAREYOU",
+    "thank you": "THANK YOU",
+    "thank you very much": "THANK YOU",
+    "thanks": "THANK YOU",
+    "how are you": "HOW ARE YOU",
+    "how are you doing": "HOW ARE YOU",
     "good morning": "GOOD MORNING",
     "good night": "GOOD NIGHT",
     "good evening": "GOOD EVENING",

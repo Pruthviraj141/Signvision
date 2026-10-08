@@ -22,8 +22,9 @@ class Settings(BaseSettings):
     RECORDINGS_DIR: str = "./recordings"
 
     class Config:
-        env_file = ".env"
+        env_file = str(Path(__file__).resolve().parent.parent.parent.parent / ".env")
         env_file_encoding = "utf-8"
+        extra = "ignore"
 
 
 @lru_cache()

@@ -1,9 +1,9 @@
 // API Configuration
 // Using ADB reverse proxy: run `adb reverse tcp:8000 tcp:8000`
 const API_CONFIG = {
-  baseUrl: __DEV__ 
+  baseUrl: process.env.EXPO_PUBLIC_CORE_API_URL || (__DEV__ 
     ? 'http://10.99.60.213:8000'
-    : 'https://your-production-api.com',
+    : 'https://your-production-api.com'),
   timeout: 60000,
   retries: 3,
   retryDelay: 1000,
@@ -254,9 +254,9 @@ export function getApiBaseUrl(): string {
 }
 
 export const VIDEO_API_CONFIG = {
-  baseUrl: __DEV__ 
+  baseUrl: process.env.EXPO_PUBLIC_VIDEO_API_URL || (__DEV__ 
     ? 'http://10.99.60.213:8001'
-    : 'https://your-video-api.com',
+    : 'https://your-video-api.com'),
   timeout: 60000,
   retries: 3,
   retryDelay: 1000,

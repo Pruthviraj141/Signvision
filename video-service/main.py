@@ -6,8 +6,10 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from google import genai
 from dotenv import load_dotenv
+from pathlib import Path
 
-load_dotenv()
+ROOT_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(dotenv_path=ROOT_DIR / ".env")
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("video-service")
