@@ -1,15 +1,15 @@
 import React, { useRef, useCallback, forwardRef, useImperativeHandle, useEffect, useState } from 'react';
 import { StyleSheet, View, Platform } from 'react-native';
-import type { AvatarMessage, WebViewOutgoingMessage } from '../types';
+import type { AvatarMessage, WebViewOutgoingMessage, AvatarName } from '../types';
 
-const AVATAR_HTML_CONTENT = `
-<!DOCTYPE html>
+export function getAvatarHtmlContent(initialAvatar: AvatarName = 'luna'): string {
+  return `<!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SignVision Avatar</title>
-    <link rel="stylesheet" href="https://vhg.cmp.uea.ac.uk/tech/jas/vhg2020/cwa/cwasa.css">
+    <link rel="stylesheet" href="https://vhg.cmp.uea.ac.uk/tech/jas/vhg2026/cwa/cwasa.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html, body { width: 100%; height: 100%; overflow: hidden; background: transparent; }
@@ -18,15 +18,15 @@ const AVATAR_HTML_CONTENT = `
         .CWASAAvatar { width: 100% !important; height: 100% !important; max-width: 450px; max-height: 550px; }
         .hidden { display: none !important; }
         .status { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%);
-            background: rgba(0,0,0,0.75); color: #fff; padding: 8px 20px; border-radius: 20px; font-size: 13px; }
+            background: rgba(0,0,0,0.75); color: #fff; padding: 8px 20px; border-radius: 20px; font-size: 13px; z-index: 10; pointer-events: none; }
         .status.fade { opacity: 0; transition: opacity 0.3s; }
         .spinner { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
             width: 50px; height: 50px; border: 4px solid rgba(255,255,255,0.2);
-            border-top-color: #4CAF50; border-radius: 50%; animation: spin 1s linear infinite; }
+            border-top-color: #4CAF50; border-radius: 50%; animation: spin 1s linear infinite; z-index: 10; pointer-events: none; }
         @keyframes spin { to { transform: translate(-50%,-50%) rotate(360deg); } }
         .word-badge { position: absolute; top: 10px; left: 10px; background: #4CAF50; color: #fff;
-            padding: 6px 14px; border-radius: 15px; font-weight: 600; font-size: 13px; }
-        .ctrl { position: absolute; top: 10px; right: 10px; }
+            padding: 6px 14px; border-radius: 15px; font-weight: 600; font-size: 13px; z-index: 10; }
+        .ctrl { position: absolute; top: 10px; right: 10px; z-index: 10; }
         .ctrl button { background: rgba(255,255,255,0.15); border: none; color: #fff;
             padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 12px; }
         .ctrl button:hover { background: rgba(255,255,255,0.25); }
@@ -48,27 +48,35 @@ const AVATAR_HTML_CONTENT = `
         <button class="bttnPlaySiGMLURL av0" id="btnPlay">Play</button>
         <button class="bttnStop av0" id="btnStop">Stop</button>
         <input type="text" class="statusExtra av0" id="inpStatus">
-        <select class="menuAv av0" id="selAv"><option value="anna" selected>anna</option></select>
+        <select class="menuAv av0" id="selAv">
+            <option value="luna">luna</option>
+            <option value="marc">marc</option>
+            <option value="anna">anna</option>
+            <option value="francoise">francoise</option>
+            <option value="siggi">siggi</option>
+        </select>
     </div>
     <div class="SToCA"></div>
 
     <script>
+        var INITIAL_AVATAR = '${initialAvatar}';
         window.CWA_CFG_DATA = {
-            jasBase: 'https://vhg.cmp.uea.ac.uk/tech/jas/vhg2020/',
-            jasVersionTag: 'vhg2020',
+            jasBase: 'https://vhg.cmp.uea.ac.uk/tech/jas/vhg2026/',
+            jasVersionTag: 'vhg2026',
             sigmlBase: 'sigml',
             avJARBase: 'avatars',
             avJSONBase: 'avjson',
             useAvatarJARs: true,
             animgenFPS: 30,
-            avs: ['anna', 'marc', 'francoise'],
-            avsfull: ['anna', 'marc', 'francoise', 'luna'],
+            avs: ['luna', 'marc', 'francoise', 'anna', 'siggi'],
+            avsfull: ['luna', 'marc', 'francoise', 'anna', 'siggi'],
             avSettings: [{
                 width: 384, 
                 height: 320, 
-                avList: 'avs', 
-                initAv: 'anna',
-                initCamera: [0, 0.23, 3.24, 5, 18, 30, -1, -1],
+                avList: 'avsfull', 
+                initAv: INITIAL_AVATAR,
+                ambIdle: false,
+                initCamera: [0, 0.20, 3.20, 5, 18, 30, -1, -1],
                 allowFrameSteps: true, 
                 allowSiGMLText: true
             }]
@@ -78,19 +86,22 @@ const AVATAR_HTML_CONTENT = `
             avSettings: [{
                 width: 384,
                 height: 320,
-                avList: 'avs',
-                initAv: 'anna',
+                avList: 'avsfull',
+                initAv: INITIAL_AVATAR,
+                ambIdle: false,
                 allowFrameSteps: true,
                 allowSiGMLText: true
             }]
         };
     </script>
-    <script src="https://vhg.cmp.uea.ac.uk/tech/jas/vhg2020/cwa/allcsa.js"></script>
+    <script src="https://vhg.cmp.uea.ac.uk/tech/jas/vhg2026/cwa/allcsa.js"></script>
     <script>
         var ready = false;
         var word = '';
         var initDone = false;
         var statusWatchStarted = false;
+        var currentAv = INITIAL_AVATAR;
+        var isSwitching = false;
         var spinner, statusEl, wordBadge, inpURL, btnPlay, btnStop, inpStatus;
 
         function initElements() {
@@ -101,6 +112,8 @@ const AVATAR_HTML_CONTENT = `
             btnPlay = document.getElementById('btnPlay');
             btnStop = document.getElementById('btnStop');
             inpStatus = document.getElementById('inpStatus');
+            var sel = document.getElementById('selAv');
+            if (sel) sel.value = currentAv;
         }
 
         function msg(m) {
@@ -119,6 +132,29 @@ const AVATAR_HTML_CONTENT = `
         function showWord(w) { if(wordBadge) { wordBadge.textContent = w.toUpperCase(); wordBadge.classList.remove('hidden'); } }
         function hideWord() { if(wordBadge) wordBadge.classList.add('hidden'); }
 
+        function registerHooks() {
+            if (typeof CWASA !== 'undefined' && CWASA.addHook) {
+                CWASA.addHook('avatarloading', function(evt) {
+                    var av = (evt && evt.msg) ? evt.msg : currentAv;
+                    isSwitching = true;
+                    showStatus('Loading ' + av + '...');
+                    showSpinner();
+                    msg({ type: 'status', status: 'Loading ' + av });
+                });
+                CWASA.addHook('avatarloaded', function(evt) {
+                    var av = (evt && evt.msg) ? evt.msg : currentAv;
+                    currentAv = av;
+                    isSwitching = false;
+                    ready = true;
+                    hideSpinner();
+                    showStatus('Ready');
+                    setTimeout(hideStatus, 1500);
+                    msg({ type: 'avatarChanged', avatar: av });
+                    msg({ type: 'ready' });
+                });
+            }
+        }
+
         function initCWASA() {
             if (initDone) return;
             initDone = true;
@@ -127,15 +163,18 @@ const AVATAR_HTML_CONTENT = `
             showStatus('Loading avatar...');
             
             try {
+                registerHooks();
                 if (typeof CWASA !== 'undefined' && CWASA.init) {
                     CWASA.init(window.CWA_CFG_DATA, window.CWA_CLIENT_CFG_DATA);
                 }
                 
                 setTimeout(function() {
                     ready = true;
+                    isSwitching = false;
                     hideSpinner();
                     showStatus('Ready');
                     msg({ type: 'ready' });
+                    msg({ type: 'avatarChanged', avatar: currentAv });
                     setTimeout(hideStatus, 2000);
                     if (!statusWatchStarted) {
                         statusWatchStarted = true;
@@ -180,6 +219,11 @@ const AVATAR_HTML_CONTENT = `
         }
 
         function play(url, w) {
+            if (isSwitching) {
+                console.log('Switch in progress, queuing play');
+                setTimeout(function() { play(url, w); }, 800);
+                return;
+            }
             if (!ready) { 
                 console.log('Avatar not ready');
                 msg({ type: 'error', message: 'Not ready' }); 
@@ -211,12 +255,61 @@ const AVATAR_HTML_CONTENT = `
             setTimeout(hideStatus, 1500);
         }
 
+        var SUPPORTED_AVATARS = ['luna', 'marc', 'anna', 'francoise', 'siggi'];
+
+        function changeAvatar(avName) {
+            if (!avName || !SUPPORTED_AVATARS.includes(avName)) return;
+            if (avName === currentAv && !isSwitching) return;
+
+            if (isPlaying) {
+                doStop();
+            }
+
+            var sel = document.getElementById('selAv') || document.querySelector('select.menuAv');
+            if (sel) {
+                isSwitching = true;
+                currentAv = avName;
+                showStatus('Loading ' + avName + '...');
+                showSpinner();
+
+                // Ensure target option exists in select element
+                var opt = sel.querySelector('option[value="' + avName + '"]');
+                if (!opt) {
+                    opt = document.createElement('option');
+                    opt.value = avName;
+                    opt.textContent = avName;
+                    sel.appendChild(opt);
+                }
+
+                sel.value = avName;
+
+                // Safely trigger CWASA switchAvatar binding
+                if (typeof sel.onchange === 'function') {
+                    sel.onchange();
+                } else {
+                    sel.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+
+                // Safety timeout fallback if hook does not trigger
+                setTimeout(function() {
+                    if (isSwitching) {
+                        isSwitching = false;
+                        hideSpinner();
+                        showStatus('Ready');
+                        setTimeout(hideStatus, 1500);
+                        msg({ type: 'avatarChanged', avatar: avName });
+                    }
+                }, 3500);
+            }
+        }
+
         window.addEventListener('message', function(e) {
             try {
                 var d = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
                 if (d.type === 'play') play(d.url, d.word);
                 else if (d.type === 'stop') doStop();
-                else if (d.type === 'ping') msg({ type: 'pong', initialized: ready });
+                else if (d.type === 'changeAvatar') changeAvatar(d.avatar);
+                else if (d.type === 'ping') msg({ type: 'pong', initialized: ready, avatar: currentAv });
             } catch (err) {}
         });
 
@@ -227,40 +320,47 @@ const AVATAR_HTML_CONTENT = `
         }
     </script>
 </body>
-</html>
-`;
+</html>`;
+}
 
-let blobUrlCache: string | null = null;
+export const AVATAR_HTML_CONTENT = getAvatarHtmlContent('luna');
 
-function getBlobUrl(): string {
-  if (!blobUrlCache) {
-    const blob = new Blob([AVATAR_HTML_CONTENT], { type: 'text/html' });
-    blobUrlCache = URL.createObjectURL(blob);
+const blobUrlCache: Record<string, string> = {};
+
+function getBlobUrl(avatar: AvatarName = 'luna'): string {
+  if (!blobUrlCache[avatar]) {
+    const html = getAvatarHtmlContent(avatar);
+    const blob = new Blob([html], { type: 'text/html' });
+    blobUrlCache[avatar] = URL.createObjectURL(blob);
   }
-  return blobUrlCache;
+  return blobUrlCache[avatar];
 }
 
 export interface AvatarWebViewRef {
   play: (url: string, word: string) => void;
   stop: () => void;
   ping: () => void;
+  setAvatar?: (avatar: AvatarName) => void;
   setSpeed?: (speed: number) => void;
   resetCamera?: () => void;
 }
 
 interface AvatarWebViewProps {
+  avatar?: AvatarName;
   onReady?: () => void;
   onPlaying?: (word: string) => void;
   onFinished?: (word: string) => void;
   onError?: (message: string) => void;
   onStatusChange?: (status: string, gloss?: string) => void;
+  onAvatarChange?: (avatar: string) => void;
 }
 
 const AvatarWebView = forwardRef<AvatarWebViewRef, AvatarWebViewProps>(
-  ({ onReady, onPlaying, onFinished, onError, onStatusChange }, ref) => {
+  ({ avatar = 'luna', onReady, onPlaying, onFinished, onError, onStatusChange, onAvatarChange }, ref) => {
     const iframeRef = useRef<HTMLIFrameElement>(null);
     const webViewRef = useRef<any>(null);
-    const [blobUrl] = useState(() => Platform.OS === 'web' ? getBlobUrl() : '');
+    const [blobUrl] = useState(() => Platform.OS === 'web' ? getBlobUrl(avatar) : '');
+    const activeAvatarRef = useRef<AvatarName>(avatar);
 
     const sendMessage = useCallback((message: WebViewOutgoingMessage) => {
       if (Platform.OS === 'web') {
@@ -280,6 +380,12 @@ const AvatarWebView = forwardRef<AvatarWebViewRef, AvatarWebViewProps>(
       ping: () => {
         sendMessage({ type: 'ping' });
       },
+      setAvatar: (newAvatar: AvatarName) => {
+        if (newAvatar !== activeAvatarRef.current) {
+          activeAvatarRef.current = newAvatar;
+          sendMessage({ type: 'changeAvatar', avatar: newAvatar });
+        }
+      },
       setSpeed: (speed: number) => {
         sendMessage({ type: 'speed', speed });
       },
@@ -288,10 +394,23 @@ const AvatarWebView = forwardRef<AvatarWebViewRef, AvatarWebViewProps>(
       },
     }));
 
+    useEffect(() => {
+      if (avatar && avatar !== activeAvatarRef.current) {
+        activeAvatarRef.current = avatar;
+        sendMessage({ type: 'changeAvatar', avatar });
+      }
+    }, [avatar, sendMessage]);
+
     const handleMessage = useCallback((data: AvatarMessage) => {
       switch (data.type) {
         case 'ready':
           onReady?.();
+          break;
+        case 'avatarChanged':
+          if (data.avatar) {
+            activeAvatarRef.current = data.avatar as AvatarName;
+            onAvatarChange?.(data.avatar);
+          }
           break;
         case 'playing':
           if (data.word) onPlaying?.(data.word);
@@ -306,7 +425,7 @@ const AvatarWebView = forwardRef<AvatarWebViewRef, AvatarWebViewProps>(
           onStatusChange?.(data.status || '', data.gloss);
           break;
       }
-    }, [onReady, onPlaying, onFinished, onError, onStatusChange]);
+    }, [onReady, onAvatarChange, onPlaying, onFinished, onError, onStatusChange]);
 
     useEffect(() => {
       if (Platform.OS === 'web') {
@@ -371,7 +490,7 @@ const AvatarWebView = forwardRef<AvatarWebViewRef, AvatarWebViewProps>(
       <View style={styles.container}>
         <WebView
           ref={webViewRef}
-          source={{ html: AVATAR_HTML_CONTENT }}
+          source={{ html: getAvatarHtmlContent(avatar) }}
           style={styles.webview}
           onMessage={handleWebViewMessage}
           injectedJavaScript={injectedJavaScript}

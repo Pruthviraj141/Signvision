@@ -6,5 +6,6 @@ export { GlossTokenBar, type GlossTokenBarProps, type GlossToken } from './Gloss
 export { PlaybackQueueBar, type PlaybackQueueBarProps } from './PlaybackQueueBar';
 export { Header, type HeaderProps } from './Header';
 export { HistorySheet, type HistorySheetProps } from './HistorySheet';
+export { AvatarSelectSheet, type AvatarSelectSheetProps } from './AvatarSelectSheet';
 export { default as HandLandmarkOverlay } from './HandLandmarkOverlay';
 export * from './ui';

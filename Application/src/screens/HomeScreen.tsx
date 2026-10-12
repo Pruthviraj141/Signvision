@@ -27,6 +27,7 @@ import { GlossTokenBar, type GlossToken } from '../components/GlossTokenBar';
 import { PlaybackQueueBar } from '../components/PlaybackQueueBar';
 import { Header } from '../components/Header';
 import { HistorySheet } from '../components/HistorySheet';
+import { AvatarSelectSheet } from '../components/AvatarSelectSheet';
 import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
@@ -35,10 +36,20 @@ import CameraTranslateScreen from './CameraTranslateScreen';
 import { processSentence, ApiError } from '../services/apiService';
 import { useResponsive } from '../hooks/useResponsive';
 import { COLORS, RADII, TYPOGRAPHY, SHADOWS } from '../theme/tokens';
-import type { PlaybackStatus, HistoryItem, SignQueueItem, ProcessingMode, SearchHistoryItem } from '../types';
+import type { PlaybackStatus, HistoryItem, SignQueueItem, ProcessingMode, SearchHistoryItem, AvatarName } from '../types';
+import { AVATAR_OPTIONS } from '../types';
 
 const HISTORY_STORAGE_KEY = '@signvision_history';
+const AVATAR_STORAGE_KEY = '@signvision_selected_avatar';
 const MAX_HISTORY_ITEMS = 30;
+
+const AVATAR_LABELS: Record<AvatarName, string> = {
+  luna: '👩 Luna',
+  marc: '👨 Marc',
+  anna: '👱‍♀️ Anna',
+  francoise: '👩‍💼 Francoise',
+  siggi: '🧢 Siggi',
+};
 
 export const HomeScreen: React.FC = () => {
   const responsive = useResponsive();
@@ -52,6 +63,8 @@ export const HomeScreen: React.FC = () => {
   const [searchHistory, setSearchHistory] = useState<HistoryItem[]>([]);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isHistorySheetOpen, setIsHistorySheetOpen] = useState(false);
+  const [selectedAvatar, setSelectedAvatar] = useState<AvatarName>('luna');
+  const [isAvatarSheetOpen, setIsAvatarSheetOpen] = useState(false);
 
   // Sentence processing state
   const [processingMode, setProcessingMode] = useState<ProcessingMode>('word');
@@ -74,7 +87,34 @@ export const HomeScreen: React.FC = () => {
 
   useEffect(() => {
     loadHistory();
+    loadAvatarPreference();
   }, []);
+
+  const loadAvatarPreference = async () => {
+    try {
+      const saved = await AsyncStorage.getItem(AVATAR_STORAGE_KEY);
+      if (saved && (AVATAR_OPTIONS as readonly string[]).includes(saved)) {
+        setSelectedAvatar(saved as AvatarName);
+      }
+    } catch (error) {
+      console.warn('Failed to load avatar preference:', error);
+    }
+  };
+
+  const handleSelectAvatar = useCallback(async (newAvatar: AvatarName) => {
+    if (newAvatar === selectedAvatar) return;
+    if (playbackStatus === 'playing') {
+      avatarRef.current?.stop();
+      setPlaybackStatus('idle');
+    }
+    setSelectedAvatar(newAvatar);
+    avatarRef.current?.setAvatar?.(newAvatar);
+    try {
+      await AsyncStorage.setItem(AVATAR_STORAGE_KEY, newAvatar);
+    } catch (error) {
+      console.warn('Failed to save avatar preference:', error);
+    }
+  }, [selectedAvatar, playbackStatus]);
 
   // Sign queue step playback
   useEffect(() => {
@@ -398,17 +438,28 @@ export const HomeScreen: React.FC = () => {
                   >
                     <Text style={styles.cameraResetText}>🎯 Reset</Text>
                   </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => setIsAvatarSheetOpen(true)}
+                    style={styles.desktopAvatarToggleBtn}
+                    accessibilityLabel={`Current avatar: ${selectedAvatar}. Tap to change character.`}
+                  >
+                    <Text style={styles.desktopAvatarToggleText}>
+                      {AVATAR_LABELS[selectedAvatar] || 'Avatar'}
+                    </Text>
+                  </TouchableOpacity>
                 </View>
               </View>
 
               <View style={styles.desktopAvatarContainer}>
                 <AvatarWebView
                   ref={avatarRef}
+                  avatar={selectedAvatar}
                   onReady={handleAvatarReady}
                   onPlaying={handlePlaying}
                   onFinished={handleFinished}
                   onError={handleError}
                   onStatusChange={handleStatusChange}
+                  onAvatarChange={(av) => setSelectedAvatar(av as AvatarName)}
                 />
               </View>
 
@@ -543,6 +594,13 @@ export const HomeScreen: React.FC = () => {
             handleRemoveHistoryItem(word);
           }}
         />
+
+        <AvatarSelectSheet
+          visible={isAvatarSheetOpen}
+          selectedAvatar={selectedAvatar}
+          onSelectAvatar={handleSelectAvatar}
+          onClose={() => setIsAvatarSheetOpen(false)}
+        />
       </SafeAreaView>
     );
   }
@@ -558,7 +616,7 @@ export const HomeScreen: React.FC = () => {
         showHistoryButton={false}
         onOpenHistory={() => setIsHistorySheetOpen(true)}
         onOpenLiveCamera={() => setIsCameraActive(true)}
-        onOpenSettings={() => setIsHistorySheetOpen(true)}
+        onOpenSettings={() => setIsAvatarSheetOpen(true)}
         historyCount={searchHistory.length}
       />
 
@@ -608,6 +666,20 @@ export const HomeScreen: React.FC = () => {
           </View>
           <View style={styles.mobileSecondaryActions}>
             <TouchableOpacity
+              onPress={() => {
+                const currentIndex = AVATAR_OPTIONS.indexOf(selectedAvatar);
+                const nextAvatar = AVATAR_OPTIONS[(currentIndex + 1) % AVATAR_OPTIONS.length];
+                handleSelectAvatar(nextAvatar);
+              }}
+              onLongPress={() => setIsAvatarSheetOpen(true)}
+              style={styles.mobileAvatarToggleBtn}
+              accessibilityLabel={`Current avatar: ${selectedAvatar}. Tap to cycle, long press for avatar details.`}
+            >
+              <Text style={styles.mobileAvatarToggleText}>
+                {AVATAR_LABELS[selectedAvatar] || 'Avatar'}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
               onPress={handleResetCamera}
               style={styles.mobileSecondaryIconBtn}
               accessibilityLabel="Reset 3D camera"
@@ -629,11 +701,13 @@ export const HomeScreen: React.FC = () => {
       <View style={styles.mobileStageContainer}>
         <AvatarWebView
           ref={avatarRef}
+          avatar={selectedAvatar}
           onReady={handleAvatarReady}
           onPlaying={handlePlaying}
           onFinished={handleFinished}
           onError={handleError}
           onStatusChange={handleStatusChange}
+          onAvatarChange={(av) => setSelectedAvatar(av as AvatarName)}
         />
 
         {/* Floating ISL Gloss Tokens Bar */}
@@ -725,6 +799,14 @@ export const HomeScreen: React.FC = () => {
           handleRemoveHistoryItem(word);
         }}
       />
+
+      {/* Avatar Selection Bottom Sheet */}
+      <AvatarSelectSheet
+        visible={isAvatarSheetOpen}
+        selectedAvatar={selectedAvatar}
+        onSelectAvatar={handleSelectAvatar}
+        onClose={() => setIsAvatarSheetOpen(false)}
+      />
     </SafeAreaView>
   );
 };
@@ -798,6 +880,20 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: COLORS.textSecondary,
     fontWeight: '600',
+  },
+  desktopAvatarToggleBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: RADII.full,
+    backgroundColor: '#1E293B',
+    borderWidth: 1,
+    borderColor: 'rgba(6, 182, 212, 0.4)',
+  },
+  desktopAvatarToggleText: {
+    ...TYPOGRAPHY.caption,
+    fontSize: 11,
+    color: COLORS.cyanLight,
+    fontWeight: '700',
   },
   desktopAvatarContainer: {
     flex: 1,
@@ -941,7 +1037,22 @@ const styles = StyleSheet.create({
   mobileSecondaryActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
+  },
+  mobileAvatarToggleBtn: {
+    height: 36,
+    paddingHorizontal: 12,
+    borderRadius: 18,
+    backgroundColor: '#111827',
+    borderWidth: 1,
+    borderColor: 'rgba(6, 182, 212, 0.4)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  mobileAvatarToggleText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: COLORS.cyanLight,
   },
   mobileSecondaryIconBtn: {
     width: 36,

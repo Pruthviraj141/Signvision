@@ -70,7 +70,7 @@ export interface SearchHistoryItem {
 }
 
 // Avatar options
-export const AVATAR_OPTIONS = ['anna', 'marc', 'francoise', 'luna'] as const;
+export const AVATAR_OPTIONS = ['luna', 'marc', 'anna', 'francoise', 'siggi'] as const;
 export type AvatarName = typeof AVATAR_OPTIONS[number];
 
 // API Response types (from backend)
